@@ -22,8 +22,10 @@ h1, h2, h3, h4, h5, h6, p {
   margin: 0;
 }
 
-.container {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 0 15px;
+button {
+  width: 20px;
+  margin: 0 2px;
+  border: 1px solid black;
 }
+
+
