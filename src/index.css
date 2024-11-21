@@ -37,9 +37,5 @@ button:hover {
   transition: all 0.2s ease-in-out;
 }
 
-.mosaic-tile-content {
-  height: 100%; /* Займає всю висоту плитки */
-  overflow: auto; /* Увімкнення прокрутки */
-}
 
 

@@ -148,7 +148,7 @@ const MosaicWrapper = (): JSX.Element => {
               </button>,
             ]}
           >
-            <div className='mosaic-tile-content'>
+            <div className="h-full overflow-auto">
               {loading ? (
                 <div>Loading...</div>
               ) : (
