@@ -2,9 +2,8 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { Mosaic, MosaicWindow, MosaicNode } from 'react-mosaic-component';
 import TileContent from '../TileContent/tileContent';
-import { ITicker } from '../../types/ticker.types';
 import { generateNewId, removeNodeFromMosaic } from './mosaicHelpers';
-import useMediaQuery from './hooks';
+import { useMediaQuery, useFetchTickers } from './hooks';
 import 'react-mosaic-component/react-mosaic-component.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
@@ -12,17 +11,6 @@ import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 export type ViewId = 'a' | 'b' | 'c' | 'new';
 
 const MosaicWrapper = (): JSX.Element => {
-  const [tickers, setTickers] = useState<ITicker[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [selectedTickers, setSelectedTickers] = useState<
-    Record<ViewId, ITicker | null>
-  >({
-    a: null,
-    b: null,
-    c: null,
-    new: null,
-  });
-
   const [mosaicValue, setMosaicValue] = useState<MosaicNode<ViewId> | null>({
     direction: 'row',
     first: 'a',
@@ -34,6 +22,8 @@ const MosaicWrapper = (): JSX.Element => {
   });
 
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const { tickers, loading, selectedTickers, setSelectedTickers } =
+    useFetchTickers();
 
   useEffect(() => {
     if (isMobile) {
@@ -59,32 +49,6 @@ const MosaicWrapper = (): JSX.Element => {
     }
   }, [isMobile]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/companies-lookup.json');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        setTickers(data);
-        setSelectedTickers({
-          a: data[0] || null,
-          b: data[1] || null,
-          c: data[2] || null,
-          new: null,
-        });
-      } catch (error) {
-        console.error('Fetch error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
   const handleSelectChange = (
     event: React.ChangeEvent<HTMLSelectElement>,
     viewId: ViewId
@@ -93,42 +57,32 @@ const MosaicWrapper = (): JSX.Element => {
     setSelectedTickers((prev) => ({ ...prev, [viewId]: ticker || null }));
   };
 
-  // Replace the content of the tile
   const handleReplace = (id: ViewId) => {
-    if (tickers.length === 0) return; // Якщо тикери не завантажені
+    if (tickers.length === 0) return;
     const ticker = tickers[Math.floor(Math.random() * tickers.length)];
     setSelectedTickers((prev) => ({ ...prev, [id]: ticker }));
   };
 
-  const generateNewId = (): ViewId => {
-    const timestamp = Date.now();
-    return `new-${timestamp}` as ViewId;
-  };
-
-  // Split the tile into two child tiles
   const handleSplit = (id: ViewId) => {
     setMosaicValue((prev) => {
       if (!prev) {
-        // Якщо дерево порожнє, створюємо новий вузол
         return {
           direction: 'row',
           first: id,
-          second: generateNewId(), // Генеруємо унікальний ID
+          second: generateNewId(),
         };
       }
 
-      // Рекурсивна функція для додавання нового вузла до дерева
       const addNewNode = (node: MosaicNode<ViewId>): MosaicNode<ViewId> => {
         if (node === id) {
           return {
-            direction: 'row', // Напрямок поділу
+            direction: 'row',
             first: id,
-            second: generateNewId(), // Генеруємо унікальний ID
+            second: generateNewId(),
           };
         }
 
         if (typeof node === 'object') {
-          // Рекурсивно обходимо дерево
           return {
             ...node,
             first: addNewNode(node.first),
@@ -143,34 +97,12 @@ const MosaicWrapper = (): JSX.Element => {
     });
   };
 
-  // Expand the tile to take up the entire space
   const handleExpand = (id: ViewId) => {
     setMosaicValue(id);
   };
 
-  // Remove the tile
   const handleClose = (id: ViewId) => {
     setMosaicValue((prev) => (prev ? removeNodeFromMosaic(prev, id) : null));
-  };
-
-  // Helper function to remove a node from the mosaic
-  const removeNodeFromMosaic = (
-    node: MosaicNode<ViewId>,
-    id: ViewId
-  ): MosaicNode<ViewId> | null => {
-    if (!node) return null;
-    if (node === id) return null;
-    if (typeof node === 'object') {
-      const newFirst = removeNodeFromMosaic(node.first, id);
-      const newSecond = removeNodeFromMosaic(node.second, id);
-
-      if (!newFirst && !newSecond) return null;
-      if (!newFirst) return newSecond!;
-      if (!newSecond) return newFirst!;
-
-      return { ...node, first: newFirst, second: newSecond };
-    }
-    return node;
   };
 
   return (
