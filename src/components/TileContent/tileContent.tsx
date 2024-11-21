@@ -2,7 +2,7 @@ import React from 'react';
 import { ITicker } from '../../types/ticker.types';
 
 interface TileContentProps {
-  ticker: ITicker | undefined;
+  ticker: ITicker | null;
 }
 
 const TileContent: React.FC<TileContentProps> = ({ ticker }): JSX.Element => {
