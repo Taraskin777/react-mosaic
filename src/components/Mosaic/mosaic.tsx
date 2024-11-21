@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { Mosaic, MosaicWindow, MosaicNode } from 'react-mosaic-component';
 import TileContent from '../TileContent/tileContent';
 import { ITicker } from '../../types/ticker.types';
+import { generateNewId, removeNodeFromMosaic } from './mosaicHelpers';
+import useMediaQuery from './hooks';
 import 'react-mosaic-component/react-mosaic-component.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
@@ -31,20 +33,7 @@ const MosaicWrapper = (): JSX.Element => {
     },
   });
 
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    handleResize();
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
     if (isMobile) {
@@ -71,10 +60,14 @@ const MosaicWrapper = (): JSX.Element => {
   }, [isMobile]);
 
   useEffect(() => {
-    setLoading(true);
-    fetch('/companies-lookup.json')
-      .then((response) => response.json())
-      .then((data) => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/companies-lookup.json');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
         setTickers(data);
         setSelectedTickers({
           a: data[0] || null,
@@ -82,8 +75,14 @@ const MosaicWrapper = (): JSX.Element => {
           c: data[2] || null,
           new: null,
         });
-      })
-      .finally(() => setLoading(false));
+      } catch (error) {
+        console.error('Fetch error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleSelectChange = (
