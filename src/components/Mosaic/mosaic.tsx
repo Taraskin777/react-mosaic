@@ -3,13 +3,11 @@ import { useState, useEffect } from 'react';
 import { Mosaic, MosaicWindow, MosaicNode } from 'react-mosaic-component';
 import TileContent from '../TileContent/tileContent';
 import { ITicker } from '../../types/ticker.types';
-import { Button } from '@blueprintjs/core';
 import 'react-mosaic-component/react-mosaic-component.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 
 export type ViewId = 'a' | 'b' | 'c' | 'new';
-
 
 const MosaicWrapper = (): JSX.Element => {
   const [tickers, setTickers] = useState<ITicker[]>([]);
@@ -32,6 +30,45 @@ const MosaicWrapper = (): JSX.Element => {
       second: 'c',
     },
   });
+
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) {
+      setMosaicValue({
+        direction: 'column',
+        first: 'a',
+        second: {
+          direction: 'column',
+          first: 'b',
+          second: 'c',
+        },
+      });
+    } else {
+      setMosaicValue({
+        direction: 'row',
+        first: 'a',
+        second: {
+          direction: 'column',
+          first: 'b',
+          second: 'c',
+        },
+      });
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     setLoading(true);
@@ -112,8 +149,6 @@ const MosaicWrapper = (): JSX.Element => {
     setMosaicValue(id);
   };
 
-
-
   // Remove the tile
   const handleClose = (id: ViewId) => {
     setMosaicValue((prev) => (prev ? removeNodeFromMosaic(prev, id) : null));
@@ -156,7 +191,7 @@ const MosaicWrapper = (): JSX.Element => {
                 style={{
                   marginLeft: '8px',
                   padding: '4px',
-                  width: 'fit-content',
+                  width: '100%',
                 }}
               >
                 <option value="" disabled>
