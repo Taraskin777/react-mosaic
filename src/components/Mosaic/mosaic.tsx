@@ -148,7 +148,13 @@ const MosaicWrapper = (): JSX.Element => {
               </button>,
             ]}
           >
-            {loading ? <div>Loading...</div> : <TileContent ticker={ticker} />}
+            <div className='mosaic-tile-content'>
+              {loading ? (
+                <div>Loading...</div>
+              ) : (
+                <TileContent ticker={ticker} />
+              )}
+            </div>
           </MosaicWindow>
         );
       }}
